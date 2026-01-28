@@ -37,6 +37,9 @@ dependencies {
     runtimeOnly 'com.mysql:mysql-connector-j'
     runtimeOnly 'com.h2database:h2'
     
+    // AWS S3
+    implementation 'com.amazonaws:aws-java-sdk-s3:1.12.470'
+    
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

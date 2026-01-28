@@ -40,3 +40,11 @@ out/
 *.db
 *.mv.db
 *.trace.db
+
+### Configuration Files (민감 정보 포함) ###
+**/application.yml
+**/application-*.yml
+**/application.properties
+**/application-*.properties
+!**/application.yml.example
+!**/application-*.yml.example
