@@ -15,7 +15,7 @@ import java.util.List;
  * 최근 본 상품 관련 REST API 엔드포인트를 제공하는 컨트롤러
  */
 @RestController
-@RequestMapping("/api/recent-products")
+@RequestMapping("/recent-products")  // context-path가 /api이므로 /api 제거
 @RequiredArgsConstructor
 public class RecentProductController {
 
