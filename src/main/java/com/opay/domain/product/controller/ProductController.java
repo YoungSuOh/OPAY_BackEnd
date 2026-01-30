@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/products")
+@RequestMapping("/products")  // context-path가 /api이므로 /api 제거
 @RequiredArgsConstructor
 public class ProductController {
 
