@@ -5,8 +5,10 @@ import com.opay.domain.shipping.repository.ShippingAddressRepository;
 import com.opay.domain.user.dto.AuthResponse;
 import com.opay.domain.user.dto.LoginRequest;
 import com.opay.domain.user.dto.SignupRequest;
+import com.opay.domain.user.dto.UserInfoResponse;
 import com.opay.domain.user.entity.User;
 import com.opay.domain.user.repository.UserRepository;
+import com.opay.domain.wallet.service.WalletService;
 import com.opay.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +26,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final ShippingAddressRepository shippingAddressRepository;
+    private final WalletService walletService;
 
     @Transactional
     public AuthResponse signup(SignupRequest request) {
@@ -106,5 +109,30 @@ public class UserService {
 
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
+    }
+
+    /**
+     * 현재 사용자 정보 조회 (포인트, 머니 포함)
+     * 
+     * @param userId 사용자 ID
+     * @return 사용자 정보
+     */
+    public UserInfoResponse getUserInfo(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+        
+        // Wallet에서 머니 조회
+        Long money = walletService.getBalance(userId);
+        
+        // 포인트는 현재 0으로 반환 (추후 Point 시스템 추가 시 연동)
+        Long point = 0L;
+        
+        return UserInfoResponse.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .name(user.getName())
+                .point(point)
+                .money(money)
+                .build();
     }
 }

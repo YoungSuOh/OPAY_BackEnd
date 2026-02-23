@@ -3,6 +3,7 @@ package com.opay.domain.user.controller;
 import com.opay.domain.user.dto.AuthResponse;
 import com.opay.domain.user.dto.LoginRequest;
 import com.opay.domain.user.dto.SignupRequest;
+import com.opay.domain.user.dto.UserInfoResponse;
 import com.opay.domain.user.service.UserService;
 import com.opay.security.jwt.JwtTokenProvider;
 import jakarta.servlet.http.Cookie;
@@ -132,6 +133,29 @@ public class AuthController {
             response.put("available", false);
             response.put("message", "이메일 중복확인 중 오류가 발생했습니다");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 현재 사용자 정보 조회
+     * GET /api/auth/me
+     */
+    @GetMapping("/me")
+    public ResponseEntity<UserInfoResponse> getCurrentUser(
+            @RequestHeader(value = "Authorization", required = false) String token) {
+        
+        if (token == null || !token.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        
+        try {
+            String jwt = token.substring(7);
+            Long userId = jwtTokenProvider.getUserIdFromToken(jwt);
+            
+            UserInfoResponse userInfo = userService.getUserInfo(userId);
+            return ResponseEntity.ok(userInfo);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
 }
