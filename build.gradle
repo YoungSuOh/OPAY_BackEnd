@@ -40,6 +40,12 @@ dependencies {
     // AWS S3
     implementation 'com.amazonaws:aws-java-sdk-s3:1.12.470'
     
+    // Elasticsearch
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+    
+    // Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
