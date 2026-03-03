@@ -28,7 +28,7 @@ public class Product {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(nullable = false)
+    @Column(nullable = false)   
     private Long price;
 
     @Column(nullable = false)

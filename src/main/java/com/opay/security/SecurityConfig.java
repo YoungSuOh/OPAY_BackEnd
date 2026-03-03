@@ -35,6 +35,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**", "/h2-console/**", "/error").permitAll()
                         .requestMatchers("/products", "/products/**").permitAll() // 상품 조회는 모두 허용 (context-path가 /api이므로 /api 제거)
+                        .requestMatchers("/search", "/search/**").permitAll() // 검색 API는 모두 허용
                         .requestMatchers("GET", "/reviews/**").permitAll() // 리뷰 조회는 모두 허용
                         .requestMatchers("/reviews/**", "/carts/**", "/recent-products/**", 
                                         "/orders/**").authenticated() // 리뷰 작성/수정/삭제, 장바구니, 최근 본 상품, 주문은 인증 필요

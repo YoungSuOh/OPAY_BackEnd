@@ -6,6 +6,7 @@ import com.opay.domain.product.dto.ProductResponse;
 import com.opay.domain.product.dto.ProductUpdateRequest;
 import com.opay.domain.product.entity.Product;
 import com.opay.domain.product.repository.ProductRepository;
+import com.opay.domain.search.service.ProductIndexService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final ProductIndexService productIndexService;
 
     @Transactional
     public ProductResponse createProduct(ProductRequest request) {
@@ -39,6 +41,7 @@ public class ProductService {
 
         Product savedProduct = productRepository.save(product);
         log.info("상품 생성 완료: productId={}, name={}", savedProduct.getId(), savedProduct.getName());
+        productIndexService.indexProduct(savedProduct);
 
         return ProductResponse.from(savedProduct);
     }
@@ -111,6 +114,7 @@ public class ProductService {
         );
 
         log.info("상품 수정 완료: productId={}, name={}", product.getId(), product.getName());
+        productIndexService.indexProduct(product);
 
         return ProductResponse.from(product);
     }
@@ -120,8 +124,11 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다: " + id));
 
+        Long productId = product.getId();
+        String productName = product.getName();
         productRepository.delete(product);
-        log.info("상품 삭제 완료: productId={}, name={}", product.getId(), product.getName());
+        productIndexService.deleteFromIndex(productId);
+        log.info("상품 삭제 완료: productId={}, name={}", productId, productName);
     }
 
     @Transactional
