@@ -43,13 +43,14 @@ public class S3ImageService {
      * 이미지 업로드
      * 
      * @param file 업로드할 이미지 파일
-     * @param productId 상품 ID (태그에 사용)
+     * @param productId 상품 ID (태그/파일명에 사용, 신규 등록 시 null 가능 → 0으로 처리)
      * @return 업로드된 이미지의 S3 URL
      */
     public String uploadImage(MultipartFile file, Long productId) {
         validateFile(file);
+        long idForKey = productId != null ? productId : 0L;
 
-        String fileName = generateFileName(file.getOriginalFilename(), productId);
+        String fileName = generateFileName(file.getOriginalFilename(), idForKey);
         String s3Key = PRODUCT_IMAGE_PREFIX + fileName;
 
         try (InputStream inputStream = file.getInputStream()) {
@@ -63,7 +64,7 @@ public class S3ImageService {
             );
 
             // 태그 설정
-            putObjectRequest.setTagging(createObjectTagging(productId));
+            putObjectRequest.setTagging(createObjectTagging(idForKey));
 
             // 객체 잠금 설정 (활성화된 경우)
             // 참고: AWS SDK 1.12.470에서는 PutObjectRequest에 직접 객체 잠금 설정이 제한적입니다.
@@ -79,7 +80,7 @@ public class S3ImageService {
             amazonS3.putObject(putObjectRequest);
 
             String imageUrl = amazonS3.getUrl(s3Config.getBucket(), s3Key).toString();
-            log.info("이미지 업로드 완료: productId={}, s3Key={}, url={}", productId, s3Key, imageUrl);
+            log.info("이미지 업로드 완료: productId={}, s3Key={}, url={}", idForKey, s3Key, imageUrl);
 
             return imageUrl;
         } catch (IOException e) {

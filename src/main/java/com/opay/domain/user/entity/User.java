@@ -18,6 +18,11 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 public class User {
 
+    public enum Role {
+        USER,
+        ADMIN
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -34,6 +39,10 @@ public class User {
     @Column(length = 20)
     private String phone;
 
+    @Column(length = 20)
+    @Enumerated(EnumType.STRING)
+    private Role role = Role.USER;
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -43,11 +52,12 @@ public class User {
     private LocalDateTime updatedAt;
 
     @Builder
-    public User(String email, String password, String name, String phone) {
+    public User(String email, String password, String name, String phone, Role role) {
         this.email = email;
         this.password = password;
         this.name = name;
         this.phone = phone;
+        this.role = role != null ? role : Role.USER;
     }
 
     public void updatePassword(String encodedPassword) {

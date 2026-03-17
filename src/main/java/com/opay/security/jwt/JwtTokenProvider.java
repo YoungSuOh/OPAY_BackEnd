@@ -27,13 +27,14 @@ public class JwtTokenProvider {
         this.refreshTokenExpiration = refreshTokenExpiration;
     }
 
-    public String generateAccessToken(Long userId, String email) {
+    public String generateAccessToken(Long userId, String email, String role) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + accessTokenExpiration);
 
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim("email", email)
+                .claim("role", role != null ? role : "USER")
                 .claim("type", "ACCESS")
                 .issuedAt(now)
                 .expiration(expiryDate)
@@ -41,13 +42,14 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    public String generateRefreshToken(Long userId, String email) {
+    public String generateRefreshToken(Long userId, String email, String role) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + refreshTokenExpiration);
 
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim("email", email)
+                .claim("role", role != null ? role : "USER")
                 .claim("type", "REFRESH")
                 .issuedAt(now)
                 .expiration(expiryDate)
@@ -73,6 +75,16 @@ public class JwtTokenProvider {
                 .getPayload();
 
         return claims.get("email", String.class);
+    }
+
+    public String getRoleFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+        String role = claims.get("role", String.class);
+        return role != null ? role : "USER";
     }
 
     public boolean validateToken(String token) {

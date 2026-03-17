@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,7 +65,7 @@ public class OrderService {
      * - 재고 확인: 주문 수량이 재고를 초과하지 않는지 확인
      * - 주문 시점의 상품 가격을 스냅샷으로 저장
      * - 주문 생성 후 재고 차감
-     * - 주문 생성 후 장바구니에서 해당 상품 제거 (선택적)
+     * - 주문 생성 후 장바구니에서 해당 상품 제거
      */
     @Transactional
     public OrderResponse createOrder(Long userId, OrderRequest request, boolean clearCart) {
@@ -133,7 +134,7 @@ public class OrderService {
         log.info("주문 생성 완료: orderId={}, userId={}, totalAmount={}", 
                 savedOrder.getId(), userId, totalAmount);
 
-        // 장바구니에서 주문한 상품 제거 (선택적)
+        // 장바구니에서 주문한 상품 제거
         if (clearCart) {
             request.getItems().forEach(itemRequest -> {
                 Cart cart = cartRepository.findByUserIdAndProductId(userId, itemRequest.getProductId())
@@ -282,5 +283,77 @@ public class OrderService {
                 .withHour(23).withMinute(59).withSecond(59);
 
         return orderRepository.countByUserIdAndCreatedAtBetween(userId, startOfMonth, endOfMonth);
+    }
+
+    /**
+     * 관리자: 주문 단건 조회 (소유자 체크 없음)
+     */
+    public OrderResponse getOrderForAdmin(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
+        List<OrderItem> orderItems = orderItemRepository.findByOrderIdOrderByCreatedAtAsc(orderId);
+        List<OrderItemResponse> itemResponses = orderItems.stream()
+                .map(OrderItemResponse::from)
+                .collect(Collectors.toList());
+        return OrderResponse.from(order, itemResponses);
+    }
+
+    /**
+     * 관리자: 주문 목록 (페이지네이션, 검색: orderId, userId, keyword=회원명/이메일)
+     */
+    public OrderListResponse getOrdersForAdmin(int page, int size, Long orderId, Long userId, String keyword) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Order> orderPage = (orderId != null || userId != null || (keyword != null && !keyword.trim().isEmpty()))
+                ? orderRepository.findForAdmin(orderId, userId, keyword != null ? keyword.trim() : null, pageable)
+                : orderRepository.findAll(pageable);
+        List<OrderResponse> orders = orderPage.getContent().stream()
+                .map(order -> {
+                    List<OrderItem> orderItems = orderItemRepository.findByOrderIdOrderByCreatedAtAsc(order.getId());
+                    List<OrderItemResponse> itemResponses = orderItems.stream()
+                            .map(OrderItemResponse::from)
+                            .collect(Collectors.toList());
+                    return OrderResponse.from(order, itemResponses);
+                })
+                .collect(Collectors.toList());
+        return OrderListResponse.builder()
+                .orders(orders)
+                .totalElements(orderPage.getTotalElements())
+                .totalPages(orderPage.getTotalPages())
+                .currentPage(orderPage.getNumber() + 1)
+                .pageSize(orderPage.getSize())
+                .hasNext(orderPage.hasNext())
+                .hasPrevious(orderPage.hasPrevious())
+                .build();
+    }
+
+    /**
+     * 관리자: 주문 상태 변경
+     */
+    @Transactional
+    public OrderResponse updateOrderStatusByAdmin(Long orderId, Order.OrderStatus status) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
+        order.updateStatus(status);
+        List<OrderItem> orderItems = orderItemRepository.findByOrderIdOrderByCreatedAtAsc(orderId);
+        List<OrderItemResponse> itemResponses = orderItems.stream()
+                .map(OrderItemResponse::from)
+                .collect(Collectors.toList());
+        return OrderResponse.from(order, itemResponses);
+    }
+
+    /**
+     * 관리자: 주문 취소 (재고 복구)
+     */
+    @Transactional
+    public void cancelOrderByAdmin(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
+        order.cancel();
+        List<OrderItem> orderItems = orderItemRepository.findByOrderIdOrderByCreatedAtAsc(orderId);
+        orderItems.forEach(orderItem -> {
+            Product product = orderItem.getProduct();
+            product.updateStock(orderItem.getQuantity());
+        });
+        log.info("관리자 주문 취소: orderId={}", orderId);
     }
 }

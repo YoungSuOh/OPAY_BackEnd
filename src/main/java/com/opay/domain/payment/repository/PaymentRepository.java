@@ -50,4 +50,21 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
      * @return 결제 목록
      */
     List<Payment> findByOrderIdAndStatus(Long orderId, Payment.PaymentStatus status);
+
+    /**
+     * 전체 결제 목록 조회 (관리자용, 최신순)
+     */
+    Page<Payment> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
+    long countByStatus(Payment.PaymentStatus status);
+
+    /**
+     * 관리자: 결제 검색 (주문 ID, 회원 ID, 회원명/이메일 키워드)
+     */
+    @Query("SELECT p FROM Payment p WHERE " +
+           "(:orderId IS NULL OR p.order.id = :orderId) AND " +
+           "(:userId IS NULL OR p.order.user.id = :userId) AND " +
+           "(:keyword IS NULL OR :keyword = '' OR LOWER(p.order.user.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(p.order.user.email) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "ORDER BY p.createdAt DESC")
+    Page<Payment> findForAdmin(@Param("orderId") Long orderId, @Param("userId") Long userId, @Param("keyword") String keyword, Pageable pageable);
 }

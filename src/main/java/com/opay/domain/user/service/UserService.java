@@ -59,8 +59,9 @@ public class UserService {
             log.info("기본 배송지 저장 완료: userId={}, address={}", savedUser.getId(), request.getShippingAddress());
         }
 
-        String accessToken = jwtTokenProvider.generateAccessToken(savedUser.getId(), savedUser.getEmail());
-        String refreshToken = jwtTokenProvider.generateRefreshToken(savedUser.getId(), savedUser.getEmail());
+        String roleStr = savedUser.getRole() != null ? savedUser.getRole().name() : "USER";
+        String accessToken = jwtTokenProvider.generateAccessToken(savedUser.getId(), savedUser.getEmail(), roleStr);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(savedUser.getId(), savedUser.getEmail(), roleStr);
 
         log.info("회원가입 완료: userId={}, email={}", savedUser.getId(), savedUser.getEmail());
 
@@ -68,6 +69,7 @@ public class UserService {
                 .userId(savedUser.getId())
                 .email(savedUser.getEmail())
                 .name(savedUser.getName())
+                .role(roleStr)
                 .accessToken(accessToken)
                 .build();
     }
@@ -80,8 +82,9 @@ public class UserService {
             throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다");
         }
 
-        String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail());
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), user.getEmail());
+        String roleStr = user.getRole() != null ? user.getRole().name() : "USER";
+        String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail(), roleStr);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), user.getEmail(), roleStr);
 
         log.info("로그인 완료: userId={}, email={}", user.getId(), user.getEmail());
 
@@ -89,6 +92,7 @@ public class UserService {
                 .userId(user.getId())
                 .email(user.getEmail())
                 .name(user.getName())
+                .role(roleStr)
                 .accessToken(accessToken)
                 .build();
     }
@@ -104,7 +108,8 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
 
-        return jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail());
+        String roleStr = user.getRole() != null ? user.getRole().name() : "USER";
+        return jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail(), roleStr);
     }
 
     public boolean existsByEmail(String email) {

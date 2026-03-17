@@ -32,12 +32,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (token != null && jwtTokenProvider.validateToken(token) && !jwtTokenProvider.isRefreshToken(token)) {
             Long userId = jwtTokenProvider.getUserIdFromToken(token);
             String email = jwtTokenProvider.getEmailFromToken(token);
+            String role = jwtTokenProvider.getRoleFromToken(token);
+            String authority = "ADMIN".equals(role) ? "ROLE_ADMIN" : "ROLE_USER";
 
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
                             userId,
                             null,
-                            Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                            Collections.singletonList(new SimpleGrantedAuthority(authority))
                     );
 
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
