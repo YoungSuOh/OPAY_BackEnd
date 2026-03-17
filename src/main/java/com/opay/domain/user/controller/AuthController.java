@@ -35,7 +35,8 @@ public class AuthController {
         // Refresh Token을 쿠키에 저장
         String refreshToken = jwtTokenProvider.generateRefreshToken(
                 authResponse.getUserId(), 
-                authResponse.getEmail()
+                authResponse.getEmail(),
+                authResponse.getRole()
         );
         
         Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
@@ -58,7 +59,8 @@ public class AuthController {
         // Refresh Token을 쿠키에 저장
         String refreshToken = jwtTokenProvider.generateRefreshToken(
                 authResponse.getUserId(), 
-                authResponse.getEmail()
+                authResponse.getEmail(),
+                authResponse.getRole()
         );
         
         Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
@@ -85,10 +87,11 @@ public class AuthController {
             Long userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
             String email = jwtTokenProvider.getEmailFromToken(refreshToken);
             
-            // 사용자 정보 조회 (간단히 토큰에서 가져오거나 DB 조회)
+            String role = jwtTokenProvider.getRoleFromToken(refreshToken);
             AuthResponse authResponse = AuthResponse.builder()
                     .userId(userId)
                     .email(email)
+                    .role(role)
                     .accessToken(newAccessToken)
                     .build();
             

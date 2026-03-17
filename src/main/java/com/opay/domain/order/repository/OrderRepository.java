@@ -51,4 +51,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     long countByUserIdAndCreatedAtBetween(@Param("userId") Long userId,
                                          @Param("startDate") LocalDateTime startDate,
                                          @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * 관리자: 주문 검색 (주문 ID, 회원 ID, 회원명/이메일 키워드)
+     */
+    @Query("SELECT o FROM Order o WHERE " +
+           "(:orderId IS NULL OR o.id = :orderId) AND " +
+           "(:userId IS NULL OR o.user.id = :userId) AND " +
+           "(:keyword IS NULL OR :keyword = '' OR LOWER(o.user.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(o.user.email) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "ORDER BY o.createdAt DESC")
+    Page<Order> findForAdmin(@Param("orderId") Long orderId, @Param("userId") Long userId, @Param("keyword") String keyword, Pageable pageable);
 }
