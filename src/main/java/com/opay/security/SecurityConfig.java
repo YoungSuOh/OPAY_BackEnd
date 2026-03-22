@@ -33,7 +33,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/h2-console/**", "/error").permitAll()
+                        .requestMatchers("/auth/**", "/h2-console/**", "/error", "/actuator/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/products", "/products/**").permitAll() // 상품 조회는 모두 허용 (context-path가 /api이므로 /api 제거)
                         .requestMatchers("/search", "/search/**").permitAll() // 검색 API는 모두 허용
